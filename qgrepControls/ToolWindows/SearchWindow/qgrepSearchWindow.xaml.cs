@@ -54,6 +54,33 @@ namespace qgrepControls.SearchWindow
 
         CacheUsageType CacheUsageType = CacheUsageType.Normal;
 
+        // 文件类型筛选下拉框的数据源。第 0 项 Default 表示不过滤（包含全部类别）。
+        private static string[] m_DefaultFileTypes = new string[]
+        {
+            "Default",
+            ".c;.cpp;.cxx;.cc;.tli;.tlh;.h;.hpp;.hxx;.hh;.inl;.rc;.resx;.idl;.asm;.inc",
+            ".cs;.resx;.resw;.xsd;.wsdl;.xaml;.xml;.htm;.html;.css;.cshtml;.json;.asp;.aspx",
+            ".vb;.resx;.resw;.xsd;.wsdl;.xaml;.xml;.htm;.html;.css;.vbhtml;.json;.asp;.aspx",
+            ".srf;.htm;.html;.xml;.gif;.jpg;.png;.css;.disco",
+            ".xml;.xsl;.xslt;.xsd;.dtd",
+            ".cshtml",
+            ".vbhtml",
+            ".vb",
+            ".cs",
+            ".asp;.aspx",
+            ".py",
+            ".txt",
+            ".json",
+            ".vue;.json",
+            ".ts",
+            ".md",
+            "."
+        };
+
+        // CK1-CK10 自定义复选框，顺序与 Settings.Default.CustomCheckBoxState 的位序一致（bit0 = CK1）
+        private CheckBox[] customFlags = null;
+        private bool isInitializingControls = true;
+
         public qgrepSearchWindowControl(IWrapperApp WrapperApp)
         {
             this.WrapperApp = WrapperApp;
@@ -67,6 +94,8 @@ namespace qgrepControls.SearchWindow
             SearchEngine.Instance.UpdateProgressCallback += HandleProgress;
 
             InitializeComponent();
+
+            customFlags = new CheckBox[] { CK1, CK2, CK3, CK4, CK5, CK6, CK7, CK8, CK9, CK10 };
 
             InitInfo.Visibility = Visibility.Collapsed;
             InitButton.Visibility = Visibility.Collapsed;
@@ -86,6 +115,7 @@ namespace qgrepControls.SearchWindow
             IncludeRegEx.IsEnabled = false;
             ExcludeRegEx.IsEnabled = false;
             FilterRegEx.IsEnabled = false;
+            SetFileTypesControlsEnabled(false);
 
             SearchCaseSensitive.IsChecked = Settings.Default.CaseSensitive;
             SearchRegEx.IsChecked = Settings.Default.RegEx;
@@ -94,6 +124,9 @@ namespace qgrepControls.SearchWindow
             IncludeRegEx.IsChecked = Settings.Default.IncludesRegEx;
             ExcludeRegEx.IsChecked = Settings.Default.ExcludesRegEx;
             FilterRegEx.IsChecked = Settings.Default.FilterRegEx;
+
+            InitializeFileTypesFilter();
+            InitializeCustomFlags();
 
             if (WrapperApp.LoadConfigAtStartup())
             {
@@ -118,6 +151,8 @@ namespace qgrepControls.SearchWindow
 
             UpdateShortcutHints();
             LoadCrashReports();
+
+            isInitializingControls = false;
         }
 
         private void LoadCrashReports()
@@ -249,6 +284,99 @@ namespace qgrepControls.SearchWindow
             FilterResultsLabel.Text = string.Format(Properties.Resources.FilterResultsLabel, bindings["ToggleFilterResults"].ToString());
         }
 
+        private void InitializeFileTypesFilter()
+        {
+            FileTypesComboBox.ItemsSource = m_DefaultFileTypes;
+
+            int index = Settings.Default.FileTypesIndex;
+            if (index < 0 || index >= m_DefaultFileTypes.Length)
+            {
+                index = 0;
+            }
+
+            FileTypesComboBox.SelectedIndex = index;
+        }
+
+        private void InitializeCustomFlags()
+        {
+            SetCustomFlagsMask(Settings.Default.CustomCheckBoxState);
+        }
+
+        private void SetFileTypesControlsEnabled(bool enabled)
+        {
+            FileTypesComboBox.IsEnabled = enabled;
+
+            foreach (CheckBox checkBox in customFlags)
+            {
+                checkBox.IsEnabled = enabled;
+            }
+        }
+
+        /// <summary>返回当前选中的文件类型（扩展名列表）；Default 或无效时返回空串，表示不过滤。</summary>
+        private string GetSelectedFileTypes()
+        {
+            int index = FileTypesComboBox.SelectedIndex;
+            if (index <= 0 || index >= m_DefaultFileTypes.Length)
+            {
+                return "";
+            }
+
+            return m_DefaultFileTypes[index];
+        }
+
+        private int GetCustomFlagsMask()
+        {
+            int mask = 0;
+
+            for (int i = 0; i < customFlags.Length; i++)
+            {
+                if (customFlags[i].IsChecked == true)
+                {
+                    mask |= 1 << i;
+                }
+            }
+
+            return mask;
+        }
+
+        private void SetCustomFlagsMask(int mask)
+        {
+            for (int i = 0; i < customFlags.Length; i++)
+            {
+                customFlags[i].IsChecked = (mask & (1 << i)) != 0;
+            }
+        }
+
+        private void FileTypesComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (isInitializingControls)
+            {
+                return;
+            }
+
+            if (Settings.Default.SearchInstantly)
+            {
+                Find();
+            }
+
+            SaveOptions();
+        }
+
+        private void CustomFlag_Click(object sender, RoutedEventArgs e)
+        {
+            if (isInitializingControls)
+            {
+                return;
+            }
+
+            if (Settings.Default.SearchInstantly)
+            {
+                Find();
+            }
+
+            SaveOptions();
+        }
+
         public void UpdateFilters()
         {
             Visibility visibility = Visibility.Collapsed;
@@ -327,6 +455,7 @@ namespace qgrepControls.SearchWindow
                 IncludeRegEx.IsEnabled = true;
                 ExcludeRegEx.IsEnabled = true;
                 FilterRegEx.IsEnabled = true;
+                SetFileTypesControlsEnabled(true);
                 HistoryButton.IsEnabled = searchHistory.Count > 0 ? true : false;
             }
         }
@@ -368,6 +497,7 @@ namespace qgrepControls.SearchWindow
             IncludeRegEx.IsEnabled = false;
             ExcludeRegEx.IsEnabled = false;
             FilterRegEx.IsEnabled = false;
+            SetFileTypesControlsEnabled(false);
         }
 
         bool QueueFindWhenVisible = true;
@@ -434,6 +564,8 @@ namespace qgrepControls.SearchWindow
             Settings.Default.IncludesRegEx = IncludeRegEx.IsChecked == true;
             Settings.Default.ExcludesRegEx = ExcludeRegEx.IsChecked == true;
             Settings.Default.FilterRegEx = FilterRegEx.IsChecked == true;
+            Settings.Default.FileTypesIndex = FileTypesComboBox.SelectedIndex >= 0 ? FileTypesComboBox.SelectedIndex : 0;
+            Settings.Default.CustomCheckBoxState = GetCustomFlagsMask();
 
             Settings.Default.Save();
         }
@@ -795,6 +927,8 @@ namespace qgrepControls.SearchWindow
                     IncludeFiles = Settings.Default.ShowIncludes && IncludeFilesInput.Text.Length > 0 ? IncludeFilesInput.Text : "",
                     ExcludeFiles = Settings.Default.ShowExcludes && ExcludeFilesInput.Text.Length > 0 ? ExcludeFilesInput.Text : "",
                     FilterResults = Settings.Default.ShowFilter && FilterResultsInput.Text.Length > 0 ? FilterResultsInput.Text : "",
+                    FileTypes = GetSelectedFileTypes(),
+                    CustomFlags = GetCustomFlagsMask(),
                     CaseSensitive = SearchCaseSensitive.IsChecked == true,
                     WholeWord = SearchWholeWord.IsChecked == true,
                     RegEx = SearchRegEx.IsChecked == true,
@@ -817,6 +951,8 @@ namespace qgrepControls.SearchWindow
                     RegEx = IncludeRegEx.IsChecked == true,
                     FilterResults = Settings.Default.ShowFilter && FilterResultsInput.Text.Length > 0 ? FilterResultsInput.Text : "",
                     FilterResultsRegEx = FilterRegEx.IsChecked == true,
+                    FileTypes = GetSelectedFileTypes(),
+                    CustomFlags = GetCustomFlagsMask(),
                     GroupingMode = 0,
                     Configs = GetSelectedConfigProjects(),
                     CacheUsageType = CacheUsageType,

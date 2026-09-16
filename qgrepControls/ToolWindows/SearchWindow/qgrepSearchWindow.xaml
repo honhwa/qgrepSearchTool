@@ -29,6 +29,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition />
             <RowDefinition Height="24" />
         </Grid.RowDefinitions>
@@ -100,7 +101,30 @@ TextChanged="SearchInput_TextChanged" LostFocus="SearchInput_LostFocus" KeyDown=
                 </StackPanel>
             </StackPanel>
         </Grid>
-        <Grid Grid.Row="4">
+        <Grid Grid.Row="4" x:Name="FileTypesGrid" Margin="0,-1,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <WrapPanel Grid.Column="0" x:Name="CustomFlagsPanel" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="6,2,0,2">
+                <CheckBox x:Name="CK1" Content="CK1" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK2" Content="CK2" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK3" Content="CK3" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK4" Content="CK4" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK5" Content="CK5" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK6" Content="CK6" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK7" Content="CK7" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK8" Content="CK8" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK9" Content="CK9" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK10" Content="CK10" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+            </WrapPanel>
+            <StackPanel Grid.Column="1" x:Name="FileTypesPanel" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="4,0,1,0">
+                <TextBlock x:Name="FileTypesLabel" Text="{x:Static resx:Resources.FileTypesLabel}" Style="{DynamicResource NormalTextBlock}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <ComboBox x:Name="FileTypesComboBox" Width="260" VerticalAlignment="Center" SelectionChanged="FileTypesComboBox_SelectionChanged"
+                          ToolTip="{x:Static resx:Resources.FileTypesTooltip}" ToolTipService.InitialShowDelay="250" />
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="5">
             <ListBox x:Name="SearchItemsListBox" Style="{DynamicResource ResultsListBox}" TabIndex="4" ItemsSource="{Binding}" KeyboardNavigation.TabNavigation="Once">
                 <ListBox.ItemTemplate>
                     <DataTemplate>

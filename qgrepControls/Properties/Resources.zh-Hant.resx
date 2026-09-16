@@ -273,6 +273,12 @@
   <data name="FilesInAndOutMessage" xml:space="preserve">
     <value>{0} 個文件，{1} Mb 輸入，{2} Mb 輸出</value>
   </data>
+  <data name="FileTypesLabel" xml:space="preserve">
+    <value>檔案類型：</value>
+  </data>
+  <data name="FileTypesTooltip" xml:space="preserve">
+    <value>只顯示副檔名在選取清單中的結果。"Default" 表示包含全部類別。</value>
+  </data>
   <data name="FilterResultsLabel" xml:space="preserve">
     <value>篩選結果 ({0})</value>
   </data>

@@ -539,6 +539,24 @@ namespace qgrepControls.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to File types:.
+        /// </summary>
+        public static string FileTypesLabel {
+            get {
+                return ResourceManager.GetString("FileTypesLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only show results whose file extension is in the selected list. &quot;Default&quot; includes every file type..
+        /// </summary>
+        public static string FileTypesTooltip {
+            get {
+                return ResourceManager.GetString("FileTypesTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Filter results ({0}).
         /// </summary>
         public static string FilterResultsLabel {

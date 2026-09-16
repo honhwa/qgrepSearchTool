@@ -277,6 +277,12 @@
   <data name="FilesInAndOutMessage" xml:space="preserve">
     <value>{0} files, {1} Mb in, {2} Mb out</value>
   </data>
+  <data name="FileTypesLabel" xml:space="preserve">
+    <value>File types:</value>
+  </data>
+  <data name="FileTypesTooltip" xml:space="preserve">
+    <value>Only show results whose file extension is in the selected list. "Default" includes every file type.</value>
+  </data>
   <data name="FilterResultsLabel" xml:space="preserve">
     <value>Filter results ({0})</value>
   </data>

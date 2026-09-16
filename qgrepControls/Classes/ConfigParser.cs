@@ -385,16 +385,31 @@ namespace qgrepControls.Classes
         {
         }
 
+        // qgrepInterop 与本类之间的约定：字符串承载的是「UTF-8 原始字节」，
+        // 用 ISO-8859-1/28591 做无损搬运（每字节 <-> U+0000..U+00FF）。
+        // 若改用 Windows-1252，0x81/0x8D/0x8F/0x90/0x9D 这几个字节有兼容风险。
+        private static readonly Encoding BytePreservingEncoding = Encoding.GetEncoding(28591);
+
         public static string ToUtf8(string path)
         {
+            if (path == null)
+            {
+                return "";
+            }
+
             byte[] utf8Bytes = Encoding.UTF8.GetBytes(path);
-            return Encoding.GetEncoding("Windows-1252").GetString(utf8Bytes);
+            return BytePreservingEncoding.GetString(utf8Bytes);
         }
 
         public static string FromUtf8(string path)
         {
-            byte[] windows1252Bytes = Encoding.GetEncoding("Windows-1252").GetBytes(path);
-            return Encoding.UTF8.GetString(windows1252Bytes);
+            if (path == null)
+            {
+                return "";
+            }
+
+            byte[] rawBytes = BytePreservingEncoding.GetBytes(path);
+            return Encoding.UTF8.GetString(rawBytes);
         }
 
         public static void Initialize(string ConfigPath)

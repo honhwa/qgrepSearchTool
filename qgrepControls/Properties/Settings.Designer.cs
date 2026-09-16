@@ -385,6 +385,30 @@ namespace qgrepControls.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int FileTypesIndex {
+            get {
+                return ((int)(this["FileTypesIndex"]));
+            }
+            set {
+                this["FileTypesIndex"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int CustomCheckBoxState {
+            get {
+                return ((int)(this["CustomCheckBoxState"]));
+            }
+            set {
+                this["CustomCheckBoxState"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("[]")]
         public string WindowSizes {
             get {

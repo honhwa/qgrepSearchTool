@@ -35,6 +35,90 @@ namespace qgrepControls.Classes
         public SearchOptions SearchOptions { get; set; }
     }
 
+    /// <summary>
+    /// 按文件扩展名过滤搜索结果。内容为空或 "Default" 表示不过滤（保留全部类别）。
+    /// </summary>
+    public class FileTypeFilter
+    {
+        public static readonly FileTypeFilter All = new FileTypeFilter(new HashSet<string>(StringComparer.OrdinalIgnoreCase), false, true);
+
+        private readonly HashSet<string> extensions;
+        private readonly bool matchExtensionless;
+        private readonly bool matchAll;
+
+        private FileTypeFilter(HashSet<string> extensions, bool matchExtensionless, bool matchAll)
+        {
+            this.extensions = extensions;
+            this.matchExtensionless = matchExtensionless;
+            this.matchAll = matchAll;
+        }
+
+        public static FileTypeFilter Parse(string fileTypes)
+        {
+            if (string.IsNullOrEmpty(fileTypes))
+            {
+                return All;
+            }
+
+            HashSet<string> parsedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            bool parsedMatchExtensionless = false;
+
+            foreach (string entry in fileTypes.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                string extension = entry.Trim();
+
+                if (extension.Length == 0 || extension.Equals("Default", StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                // "." 表示没有扩展名的文件
+                if (extension == ".")
+                {
+                    parsedMatchExtensionless = true;
+                    continue;
+                }
+
+                if (extension[0] != '.')
+                {
+                    extension = "." + extension;
+                }
+
+                parsedExtensions.Add(extension);
+            }
+
+            if (parsedExtensions.Count == 0 && !parsedMatchExtensionless)
+            {
+                return All;
+            }
+
+            return new FileTypeFilter(parsedExtensions, parsedMatchExtensionless, false);
+        }
+
+        public bool Matches(string path)
+        {
+            if (matchAll || string.IsNullOrEmpty(path))
+            {
+                return true;
+            }
+
+            string fileName = path;
+            int lastSeparator = fileName.LastIndexOfAny(new[] { '/', '\\' });
+            if (lastSeparator >= 0)
+            {
+                fileName = fileName.Substring(lastSeparator + 1);
+            }
+
+            int lastDot = fileName.LastIndexOf('.');
+            if (lastDot <= 0)
+            {
+                return matchExtensionless;
+            }
+
+            return extensions.Contains(fileName.Substring(lastDot));
+        }
+    }
+
     public class SearchOptions
     {
         public int Id { get; set; }
@@ -44,6 +128,10 @@ namespace qgrepControls.Classes
         public string IncludeFiles { get; set; } = "";
         public string ExcludeFiles { get; set; } = "";
         public string FilterResults { get; set; } = "";
+        /// <summary>扩展名白名单（形如 ".cs;.xaml"）；为空表示 Default，不过滤。</summary>
+        public string FileTypes { get; set; } = "";
+        /// <summary>CK1-CK10 自定义复选框的状态位（bit0 = CK1）。</summary>
+        public int CustomFlags { get; set; } = 0;
         public bool CaseSensitive { get; set; } = false;
         public bool WholeWord { get; set; } = false;
         public bool RegEx { get; set; } = false;
@@ -59,11 +147,16 @@ namespace qgrepControls.Classes
         public bool WasForceStopped { get; internal set; }
         public bool IsNewSearch { get; set; } = true;
 
+        /// <summary>FileTypes 解析后的结果，由 SearchEngine 在开始搜索前赋值。</summary>
+        internal FileTypeFilter ExtensionsFilter { get; set; } = FileTypeFilter.All;
+
         public bool CanUseCache(SearchOptions newSearchOptions)
         {
             return Query.Equals(newSearchOptions.Query) &&
                 IncludeFiles.Equals(newSearchOptions.IncludeFiles) &&
                 ExcludeFiles.Equals(newSearchOptions.ExcludeFiles) &&
+                FileTypes.Equals(newSearchOptions.FileTypes) &&
+                CustomFlags == newSearchOptions.CustomFlags &&
                 CaseSensitive == newSearchOptions.CaseSensitive &&
                 WholeWord == newSearchOptions.WholeWord &&
                 RegEx == newSearchOptions.RegEx &&
@@ -133,6 +226,7 @@ namespace qgrepControls.Classes
         public void SearchAsync(SearchOptions searchOptions)
         {
             searchOptions.Id = currentId++;
+            searchOptions.ExtensionsFilter = FileTypeFilter.Parse(searchOptions.FileTypes);
 
             if (IsBusy || !MutexUtility.Instance.TryAcquireMutex())
             {
@@ -201,13 +295,13 @@ namespace qgrepControls.Classes
                     if (searchOptions.IncludeFiles.Length > 0)
                     {
                         string processedIncludeFiles = searchOptions.IncludeFiles.Replace("\\", "/");
-                        arguments.Add("fi" + (searchOptions.IncludeFilesRegEx ? processedIncludeFiles : Regex.Escape(processedIncludeFiles)));
+                        arguments.Add("fi" + ConfigParser.ToUtf8(searchOptions.IncludeFilesRegEx ? processedIncludeFiles : Regex.Escape(processedIncludeFiles)));
                     }
 
                     if (searchOptions.ExcludeFiles.Length > 0)
                     {
                         string processedExcludeFiles = searchOptions.ExcludeFiles.Replace("\\", "/");
-                        arguments.Add("fe" + (searchOptions.ExcludeFilesRegEx ? processedExcludeFiles : Regex.Escape(processedExcludeFiles)));
+                        arguments.Add("fe" + ConfigParser.ToUtf8(searchOptions.ExcludeFilesRegEx ? processedExcludeFiles : Regex.Escape(processedExcludeFiles)));
                     }
 
                     arguments.Add("HD");
@@ -235,11 +329,11 @@ namespace qgrepControls.Classes
 
                     if (searchOptions.WholeWord)
                     {
-                        arguments.Add("\\b" + (searchOptions.RegEx ? searchOptions.Query : Regex.Escape(searchOptions.Query)) + "\\b");
+                        arguments.Add(ConfigParser.ToUtf8("\\b" + (searchOptions.RegEx ? searchOptions.Query : Regex.Escape(searchOptions.Query)) + "\\b"));
                     }
                     else
                     {
-                        arguments.Add(searchOptions.Query);
+                        arguments.Add(ConfigParser.ToUtf8(searchOptions.Query));
                     }
 
                     QGrepWrapper.CallQGrepAsync(arguments,
@@ -268,6 +362,8 @@ namespace qgrepControls.Classes
         }
         public void SearchFilesAsync(SearchOptions searchOptions)
         {
+            searchOptions.ExtensionsFilter = FileTypeFilter.Parse(searchOptions.FileTypes);
+
             if (IsBusy || !MutexUtility.Instance.TryAcquireMutex())
             {
                 QueuedSearchFilesOptions = searchOptions;
@@ -299,8 +395,8 @@ namespace qgrepControls.Classes
                     "i",
                     "V",
                     searchOptions.FileSearchUnorderedKeywords ? "fc" : "fp",
-                    (searchOptions.FileSearchUnorderedKeywords ? ConfigParser.GetPathToRemove(Settings.Default.FilesSearchScopeIndex) + "\xB0" : "") +
-                    (searchOptions.RegEx ? processedQuery : Regex.Escape(processedQuery))
+                    (searchOptions.FileSearchUnorderedKeywords ? ConfigParser.ToUtf8(ConfigParser.GetPathToRemove(Settings.Default.FilesSearchScopeIndex)) + "\xB0" : "") +
+                    ConfigParser.ToUtf8(searchOptions.RegEx ? processedQuery : Regex.Escape(processedQuery))
                 };
 
                 QGrepWrapper.CallQGrepAsync(arguments,
@@ -398,12 +494,20 @@ namespace qgrepControls.Classes
                 {
                     string fileAndLineNo = result.Substring(0, currentIndex);
                     result = currentIndex + 1 < result.Length ? result.Substring(currentIndex + 1) : "";
+                    // 引擎输出的是 UTF-8 原始字节，转成真实文本后再做过滤/高亮/显示，保证三处用的是同一份文本
+                    result = ConfigParser.FromUtf8(result);
 
                     int indexOfParanthesis = fileAndLineNo.LastIndexOf('(');
                     if (indexOfParanthesis >= 0 && fileAndLineNo.Length - indexOfParanthesis - 2 >= 0)
                     {
                         lineNo = fileAndLineNo.Substring(indexOfParanthesis + 1, fileAndLineNo.Length - indexOfParanthesis - 2);
                         file = ConfigParser.FromUtf8(fileAndLineNo.Substring(0, indexOfParanthesis));
+
+                        // 文件扩展名过滤：不在选定文件类型列表内的结果直接丢弃
+                        if (!searchOptions.ExtensionsFilter.Matches(file))
+                        {
+                            return;
+                        }
 
                         if (searchOptions.FilterResults.Length > 0)
                         {
@@ -460,6 +564,17 @@ namespace qgrepControls.Classes
                         }
                     }
                     else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    // 'files' 命令只输出路径、没有 0xB0 分隔符，整串都是文本
+                    result = ConfigParser.FromUtf8(result);
+
+                    // 文件搜索的结果就是路径本身，同样按扩展名过滤
+                    if (searchOptions.IsFileSearch && !searchOptions.ExtensionsFilter.Matches(result))
                     {
                         return;
                     }
@@ -578,7 +693,7 @@ namespace qgrepControls.Classes
                             "qgrep",
                             "change",
                             string.Join(",", databaseUpdate.ConfigPaths),
-                            string.Join(",", databaseUpdate.Files)
+                            string.Join(",", databaseUpdate.Files.Select(ConfigParser.ToUtf8))
                         };
 
                         QGrepWrapper.CallQGrepAsync(parameters,
