@@ -557,6 +557,60 @@ namespace qgrepControls.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Comments.
+        /// </summary>
+        public static string CustomFlagCommentsLabel {
+            get {
+                return ResourceManager.GetString("CustomFlagCommentsLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Keep results found inside comments..
+        /// </summary>
+        public static string CustomFlagCommentsTooltip {
+            get {
+                return ResourceManager.GetString("CustomFlagCommentsTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Current file only.
+        /// </summary>
+        public static string CustomFlagCurrentFileLabel {
+            get {
+                return ResourceManager.GetString("CustomFlagCurrentFileLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Only show results found in the file that is currently active in the editor..
+        /// </summary>
+        public static string CustomFlagCurrentFileTooltip {
+            get {
+                return ResourceManager.GetString("CustomFlagCurrentFileTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude DSN.
+        /// </summary>
+        public static string CustomFlagExcludeDesignerLabel {
+            get {
+                return ResourceManager.GetString("CustomFlagExcludeDesignerLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Don&apos;t show results found in .designer.cs / .designer.vb files..
+        /// </summary>
+        public static string CustomFlagExcludeDesignerTooltip {
+            get {
+                return ResourceManager.GetString("CustomFlagExcludeDesignerTooltip", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Filter results ({0}).
         /// </summary>
         public static string FilterResultsLabel {

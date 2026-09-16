@@ -324,6 +324,24 @@ namespace qgrepControls.SearchWindow
             return m_DefaultFileTypes[index];
         }
 
+        /// <summary>CK2「只看当前文件」勾选时返回当前编辑器活动文件的完整路径，否则返回空串（表示不做该筛选）。</summary>
+        private string GetActiveFilePathIfNeeded()
+        {
+            if ((GetCustomFlagsMask() & CustomFlag.CurrentFileOnly) == 0)
+            {
+                return "";
+            }
+
+            try
+            {
+                return WrapperApp.GetActiveDocumentPath() ?? "";
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
         private int GetCustomFlagsMask()
         {
             int mask = 0;
@@ -929,6 +947,7 @@ namespace qgrepControls.SearchWindow
                     FilterResults = Settings.Default.ShowFilter && FilterResultsInput.Text.Length > 0 ? FilterResultsInput.Text : "",
                     FileTypes = GetSelectedFileTypes(),
                     CustomFlags = GetCustomFlagsMask(),
+                    ActiveFilePath = GetActiveFilePathIfNeeded(),
                     CaseSensitive = SearchCaseSensitive.IsChecked == true,
                     WholeWord = SearchWholeWord.IsChecked == true,
                     RegEx = SearchRegEx.IsChecked == true,
@@ -953,6 +972,7 @@ namespace qgrepControls.SearchWindow
                     FilterResultsRegEx = FilterRegEx.IsChecked == true,
                     FileTypes = GetSelectedFileTypes(),
                     CustomFlags = GetCustomFlagsMask(),
+                    ActiveFilePath = GetActiveFilePathIfNeeded(),
                     GroupingMode = 0,
                     Configs = GetSelectedConfigProjects(),
                     CacheUsageType = CacheUsageType,

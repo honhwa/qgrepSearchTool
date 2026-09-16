@@ -259,6 +259,24 @@
   <data name="FileTypesTooltip" xml:space="preserve">
     <value>只显示文件扩展名在所选列表中的结果。"Default" 表示包含全部类别。</value>
   </data>
+  <data name="CustomFlagCommentsLabel" xml:space="preserve">
+    <value>含注释</value>
+  </data>
+  <data name="CustomFlagCommentsTooltip" xml:space="preserve">
+    <value>勾选时保留注释里的匹配；取消勾选后，按文件扩展名对应的注释语法，不显示注释里的匹配。</value>
+  </data>
+  <data name="CustomFlagCurrentFileLabel" xml:space="preserve">
+    <value>只看当前文件</value>
+  </data>
+  <data name="CustomFlagCurrentFileTooltip" xml:space="preserve">
+    <value>只显示当前编辑器中活动文件里找到的结果。</value>
+  </data>
+  <data name="CustomFlagExcludeDesignerLabel" xml:space="preserve">
+    <value>排除DSN</value>
+  </data>
+  <data name="CustomFlagExcludeDesignerTooltip" xml:space="preserve">
+    <value>不显示在 .designer.cs、.designer.vb 文件里找到的结果。</value>
+  </data>
   <data name="FilterResultsLabel" xml:space="preserve">
     <value>筛选结果 ({0})</value>
   </data>

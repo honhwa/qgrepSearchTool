@@ -107,9 +107,9 @@ TextChanged="SearchInput_TextChanged" LostFocus="SearchInput_LostFocus" KeyDown=
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <WrapPanel Grid.Column="0" x:Name="CustomFlagsPanel" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="6,2,0,2">
-                <CheckBox x:Name="CK1" Content="CK1" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
-                <CheckBox x:Name="CK2" Content="CK2" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
-                <CheckBox x:Name="CK3" Content="CK3" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
+                <CheckBox x:Name="CK1" Content="{x:Static resx:Resources.CustomFlagCommentsLabel}" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" ToolTip="{x:Static resx:Resources.CustomFlagCommentsTooltip}" />
+                <CheckBox x:Name="CK2" Content="{x:Static resx:Resources.CustomFlagCurrentFileLabel}" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" ToolTip="{x:Static resx:Resources.CustomFlagCurrentFileTooltip}" />
+                <CheckBox x:Name="CK3" Content="{x:Static resx:Resources.CustomFlagExcludeDesignerLabel}" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" ToolTip="{x:Static resx:Resources.CustomFlagExcludeDesignerTooltip}" />
                 <CheckBox x:Name="CK4" Content="CK4" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
                 <CheckBox x:Name="CK5" Content="CK5" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />
                 <CheckBox x:Name="CK6" Content="CK6" Style="{DynamicResource SomeCheckBox}" Margin="0,1,8,1" Click="CustomFlag_Click" />

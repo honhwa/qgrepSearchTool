@@ -1161,6 +1161,33 @@ namespace qgrepSearch
             return false;
         }
 
+        public string GetActiveDocumentPath()
+        {
+            try
+            {
+                EnvDTE.DTE dte = Data == null ? null : Data.DTE;
+
+                if (dte == null)
+                {
+                    return "";
+                }
+
+                // DTE 只能在 UI 线程访问；不管调用方在哪个线程，都切回主线程再取
+                return ThreadHelper.JoinableTaskFactory.Run(async delegate
+                {
+                    await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+
+                    EnvDTE.Document activeDocument = dte.ActiveDocument;
+                    return activeDocument == null ? "" : (activeDocument.FullName ?? "");
+                });
+            }
+            catch
+            {
+            }
+
+            return "";
+        }
+
         public void OpenKeyBindingSettings()
         {
             ThreadHelper.ThrowIfNotOnUIThread();

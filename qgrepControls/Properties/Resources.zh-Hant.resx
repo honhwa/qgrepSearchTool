@@ -279,6 +279,24 @@
   <data name="FileTypesTooltip" xml:space="preserve">
     <value>只顯示副檔名在選取清單中的結果。"Default" 表示包含全部類別。</value>
   </data>
+  <data name="CustomFlagCommentsLabel" xml:space="preserve">
+    <value>含註解</value>
+  </data>
+  <data name="CustomFlagCommentsTooltip" xml:space="preserve">
+    <value>勾選時保留註解裡的符合項；取消勾選後，依副檔名對應的註解語法，不顯示註解裡的符合項。</value>
+  </data>
+  <data name="CustomFlagCurrentFileLabel" xml:space="preserve">
+    <value>只看目前檔案</value>
+  </data>
+  <data name="CustomFlagCurrentFileTooltip" xml:space="preserve">
+    <value>只顯示目前編輯器中作用中檔案裡找到的結果。</value>
+  </data>
+  <data name="CustomFlagExcludeDesignerLabel" xml:space="preserve">
+    <value>排除DSN</value>
+  </data>
+  <data name="CustomFlagExcludeDesignerTooltip" xml:space="preserve">
+    <value>不顯示在 .designer.cs、.designer.vb 檔案裡找到的結果。</value>
+  </data>
   <data name="FilterResultsLabel" xml:space="preserve">
     <value>篩選結果 ({0})</value>
   </data>

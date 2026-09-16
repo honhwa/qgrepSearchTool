@@ -81,6 +81,7 @@
     <Compile Include="Classes\Hotkey.cs" />
     <Compile Include="Classes\LocalizationHelper.cs" />
     <Compile Include="Classes\MutexUtility.cs" />
+    <Compile Include="Classes\ResultFilters.cs" />
     <Compile Include="Classes\SearchEngine.cs" />
     <Compile Include="Classes\TaskRunner.cs" />
     <Compile Include="Classes\ThemeHelper.cs" />

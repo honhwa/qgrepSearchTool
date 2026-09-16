@@ -29,6 +29,7 @@ namespace qgrepGUI
     class StandaloneWrapper : IWrapperApp
     {
         Window Window;
+        private string lastOpenedFile = "";
         public StandaloneWrapper(Window window)
         {
             Window = window;
@@ -76,9 +77,16 @@ namespace qgrepGUI
         {
             try
             {
+                lastOpenedFile = path ?? "";
                 System.Diagnostics.Process.Start(path);
             }
             catch { }
+        }
+
+        /// <summary>独立版没有编辑器集成，「当前文件」取最后一次打开的文件。</summary>
+        public string GetActiveDocumentPath()
+        {
+            return lastOpenedFile ?? "";
         }
 
         public void GatherAllFoldersAndExtensionsFromSolution(MessageCallback extensionsList, MessageCallback folderCallback)

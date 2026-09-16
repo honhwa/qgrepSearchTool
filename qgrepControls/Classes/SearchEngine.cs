@@ -130,8 +130,10 @@ namespace qgrepControls.Classes
         public string FilterResults { get; set; } = "";
         /// <summary>扩展名白名单（形如 ".cs;.xaml"）；为空表示 Default，不过滤。</summary>
         public string FileTypes { get; set; } = "";
-        /// <summary>CK1-CK10 自定义复选框的状态位（bit0 = CK1）。</summary>
+        /// <summary>CK1-CK10 自定义复选框的状态位（bit0 = CK1），含义见 CustomFlag。</summary>
         public int CustomFlags { get; set; } = 0;
+        /// <summary>CK2「只看当前文件」用于比较的当前文件路径；未启用该筛选时为空串。</summary>
+        public string ActiveFilePath { get; set; } = "";
         public bool CaseSensitive { get; set; } = false;
         public bool WholeWord { get; set; } = false;
         public bool RegEx { get; set; } = false;
@@ -150,13 +152,42 @@ namespace qgrepControls.Classes
         /// <summary>FileTypes 解析后的结果，由 SearchEngine 在开始搜索前赋值。</summary>
         internal FileTypeFilter ExtensionsFilter { get; set; } = FileTypeFilter.All;
 
+        /// <summary>CK1「含注释」：勾选时保留注释里的匹配。</summary>
+        internal bool IncludeComments
+        {
+            get { return (CustomFlags & CustomFlag.IncludeComments) != 0; }
+        }
+
+        /// <summary>CK2「只看当前文件」。</summary>
+        internal bool CurrentFileOnly
+        {
+            get { return (CustomFlags & CustomFlag.CurrentFileOnly) != 0; }
+        }
+
+        /// <summary>CK3「排除DSN」。</summary>
+        internal bool ExcludeDesignerFiles
+        {
+            get { return (CustomFlags & CustomFlag.ExcludeDesigner) != 0; }
+        }
+
+        /// <summary>注释判定器，一次搜索一个实例（内部会持有扫描中的文件句柄）。</summary>
+        internal CommentFilter Comments { get; set; } = new CommentFilter();
+
+        /// <summary>搜索结束后释放筛选器占用的资源。</summary>
+        internal void ReleaseFilters()
+        {
+            Comments.Reset();
+        }
+
         public bool CanUseCache(SearchOptions newSearchOptions)
         {
+            // 说明：CustomFlags 不参与比较。结果级筛选（CK1/CK2/CK3）会在缓存重放时重新执行，
+            // 所以切换这些复选框可以直接复用引擎输出，无需重新搜索。
             return Query.Equals(newSearchOptions.Query) &&
                 IncludeFiles.Equals(newSearchOptions.IncludeFiles) &&
                 ExcludeFiles.Equals(newSearchOptions.ExcludeFiles) &&
                 FileTypes.Equals(newSearchOptions.FileTypes) &&
-                CustomFlags == newSearchOptions.CustomFlags &&
+                ActiveFilePath.Equals(newSearchOptions.ActiveFilePath) &&
                 CaseSensitive == newSearchOptions.CaseSensitive &&
                 WholeWord == newSearchOptions.WholeWord &&
                 RegEx == newSearchOptions.RegEx &&
@@ -349,6 +380,9 @@ namespace qgrepControls.Classes
                     CachedSearch.SearchOptions = null;
                 }
 
+                // 释放注释判定器持有的文件句柄
+                searchOptions.ReleaseFilters();
+
                 searchOptions.EventsHandler.OnFinishSearchEvent(searchOptions);
 
                 IsBusy = false;
@@ -410,6 +444,9 @@ namespace qgrepControls.Classes
                     searchOptions.WasForceStopped = true;
                     CachedSearch.SearchOptions = null;
                 }
+
+                // 释放注释判定器持有的文件句柄
+                searchOptions.ReleaseFilters();
 
                 searchOptions.EventsHandler.OnFinishSearchEvent(searchOptions);
 
@@ -488,6 +525,7 @@ namespace qgrepControls.Classes
             try
             {
                 string file = "", beginText, endText, highlightedText, lineNo = "";
+                int matchBegin = 0, matchLength = 0;
 
                 int currentIndex = result.IndexOf('\xB0');
                 if (currentIndex >= 0)
@@ -497,6 +535,9 @@ namespace qgrepControls.Classes
                     // 引擎输出的是 UTF-8 原始字节，转成真实文本后再做过滤/高亮/显示，保证三处用的是同一份文本
                     result = ConfigParser.FromUtf8(result);
 
+                    // 匹配位置只算一次：CK1 注释过滤与后面的高亮共用
+                    Highlight(result, ref matchBegin, ref matchLength, searchOptions);
+
                     int indexOfParanthesis = fileAndLineNo.LastIndexOf('(');
                     if (indexOfParanthesis >= 0 && fileAndLineNo.Length - indexOfParanthesis - 2 >= 0)
                     {
@@ -505,6 +546,24 @@ namespace qgrepControls.Classes
 
                         // 文件扩展名过滤：不在选定文件类型列表内的结果直接丢弃
                         if (!searchOptions.ExtensionsFilter.Matches(file))
+                        {
+                            return;
+                        }
+
+                        // CK3「排除DSN」：跳过设计器自动生成的代码文件
+                        if (searchOptions.ExcludeDesignerFiles && DesignerFiles.IsDesignerFile(file))
+                        {
+                            return;
+                        }
+
+                        // CK2「只看当前文件」：只保留当前编辑器活动文件里的结果
+                        if (searchOptions.CurrentFileOnly && !ResultPath.IsSameFile(file, searchOptions.ActiveFilePath))
+                        {
+                            return;
+                        }
+
+                        // CK1「含注释」未勾选：按文件扩展名对应的注释语法，隐藏注释里的匹配
+                        if (!searchOptions.IncludeComments && searchOptions.Comments.IsMatchInComment(file, lineNo, matchBegin))
                         {
                             return;
                         }
@@ -573,19 +632,31 @@ namespace qgrepControls.Classes
                     // 'files' 命令只输出路径、没有 0xB0 分隔符，整串都是文本
                     result = ConfigParser.FromUtf8(result);
 
-                    // 文件搜索的结果就是路径本身，同样按扩展名过滤
-                    if (searchOptions.IsFileSearch && !searchOptions.ExtensionsFilter.Matches(result))
+                    if (searchOptions.IsFileSearch)
                     {
-                        return;
+                        // 文件搜索的结果就是路径本身，同样按扩展名 / 设计器 / 当前文件过滤
+                        if (!searchOptions.ExtensionsFilter.Matches(result))
+                        {
+                            return;
+                        }
+
+                        if (searchOptions.ExcludeDesignerFiles && DesignerFiles.IsDesignerFile(result))
+                        {
+                            return;
+                        }
+
+                        if (searchOptions.CurrentFileOnly && !ResultPath.IsSameFile(result, searchOptions.ActiveFilePath))
+                        {
+                            return;
+                        }
                     }
+
+                    Highlight(result, ref matchBegin, ref matchLength, searchOptions);
                 }
 
                 if (!searchOptions.BypassHighlight)
                 {
-                    int highlightBegin = 0, highlightEnd = 0;
-                    Highlight(result, ref highlightBegin, ref highlightEnd, searchOptions);
-
-                    currentIndex = highlightBegin;
+                    currentIndex = matchBegin;
                     if (currentIndex >= 0)
                     {
                         beginText = result.Substring(0, currentIndex);
@@ -596,7 +667,7 @@ namespace qgrepControls.Classes
                         return;
                     }
 
-                    currentIndex = highlightEnd;
+                    currentIndex = matchLength;
                     if (currentIndex >= 0)
                     {
                         highlightedText = result.Substring(0, currentIndex);

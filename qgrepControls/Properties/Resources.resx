@@ -283,6 +283,24 @@
   <data name="FileTypesTooltip" xml:space="preserve">
     <value>Only show results whose file extension is in the selected list. "Default" includes every file type.</value>
   </data>
+  <data name="CustomFlagCommentsLabel" xml:space="preserve">
+    <value>Comments</value>
+  </data>
+  <data name="CustomFlagCommentsTooltip" xml:space="preserve">
+    <value>Keep results found inside comments. When unchecked, matches inside comments are hidden according to the comment syntax of the file type.</value>
+  </data>
+  <data name="CustomFlagCurrentFileLabel" xml:space="preserve">
+    <value>Current file only</value>
+  </data>
+  <data name="CustomFlagCurrentFileTooltip" xml:space="preserve">
+    <value>Only show results found in the file that is currently active in the editor.</value>
+  </data>
+  <data name="CustomFlagExcludeDesignerLabel" xml:space="preserve">
+    <value>Exclude DSN</value>
+  </data>
+  <data name="CustomFlagExcludeDesignerTooltip" xml:space="preserve">
+    <value>Don't show results found in .designer.cs / .designer.vb files.</value>
+  </data>
   <data name="FilterResultsLabel" xml:space="preserve">
     <value>Filter results ({0})</value>
   </data>

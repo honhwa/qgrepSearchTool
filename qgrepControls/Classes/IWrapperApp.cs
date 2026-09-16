@@ -33,6 +33,8 @@ namespace qgrepControls.Classes
         bool LoadConfigAtStartup();
         void IncludeFile(string path);
         bool IsActiveDocumentCpp();
+        /// <summary>当前编辑器活动文件的完整路径；取不到时返回空串。</summary>
+        string GetActiveDocumentPath();
         void OpenKeyBindingSettings();
     }
 }
