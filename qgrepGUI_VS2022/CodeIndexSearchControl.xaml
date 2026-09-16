@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="CodeIndex.VisualStudioExtension.CodeIndexSearchControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:cvt="clr-namespace:CodeIndex.VisualStudioExtension.Converts"
+             xmlns:res="clr-namespace:CodeIndex.VisualStudioExtension.Resources"
+             xmlns:stringTools="clr-namespace:Microsoft.NET.StringTools;assembly=Microsoft.NET.StringTools"
+             mc:Ignorable="d"
+             d:DesignHeight="281.2" d:DesignWidth="987.2"
+             Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+             Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/ExtensionResourceDictionary.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <cvt:LocalizeConverter x:Key="LocalizeConverter"/>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <Grid>
+        <DockPanel LastChildFill="True" Margin="6">
+            <WrapPanel HorizontalAlignment="Left" DockPanel.Dock="Top">
+                <DockPanel Style="{StaticResource PanelForWrapPanel}">
+                    <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_Content}"/>
+                    <TextBox Height="23" TextWrapping="Wrap" Text="{Binding Content, UpdateSourceTrigger=PropertyChanged}" Width="240" KeyUp="ContentTextBox_KeyUp" MaxLength="1000" />
+                </DockPanel>
+                <CheckBox Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_CaseSensitive}" Style="{StaticResource CommonCheckBox}" IsChecked="{Binding CaseSensitive}"/>
+                <CheckBox Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_PhaseQuery}"  Style="{StaticResource CommonCheckBox}" IsChecked="{Binding PhaseQuery}"/>
+                <DockPanel Style="{StaticResource PanelForWrapPanel}">
+                    <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_FileName}" />
+                    <TextBox Height="23" TextWrapping="Wrap" Text="{Binding FileName, UpdateSourceTrigger=PropertyChanged}" Width="120" KeyDown="TextBox_KeyDown" MaxLength="200" />
+                </DockPanel>
+                <DockPanel Style="{StaticResource PanelForWrapPanel}">
+                    <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_FileExtension}" />
+                    <TextBox Height="23" TextWrapping="Wrap" Text="{Binding FileExtension, UpdateSourceTrigger=PropertyChanged}" Width="120" KeyDown="TextBox_KeyDown" MaxLength="21" />
+                </DockPanel>
+                <DockPanel Style="{StaticResource PanelForWrapPanel}">
+                    <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_FileLocation}" />
+                    <TextBox Height="23" TextWrapping="Wrap" Text="{Binding FileLocation, UpdateSourceTrigger=PropertyChanged}" Width="120" KeyDown="TextBox_KeyDown" MaxLength="1000" />
+                </DockPanel>
+                <DockPanel Style="{StaticResource PanelForWrapPanel}">
+                    <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_ShowResults}" />
+                    <ComboBox SelectedValue="{Binding ShowResultsNumber}" ItemsSource="{Binding Options}" DisplayMemberPath="Name" SelectedValuePath="Value" Width="100" VerticalAlignment="Center" />
+                </DockPanel>
+                <DockPanel Style="{StaticResource PanelForWrapPanel}">
+                    <Button x:Name="SearchButton" Margin="10 2 0 2" Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_Search}" Command="{Binding SearchIndexCommand}" Style="{StaticResource InfoButton}" />
+                    <Button Margin="10 2 0 2" Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_StopSearch}" Command="{Binding StopSearchCommand}" Style="{StaticResource WarnButton}" />
+                </DockPanel>
+            </WrapPanel>
+            <Grid DockPanel.Dock="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_Index}" Style="{StaticResource CommonLabel}" Grid.Column="0" VerticalAlignment="Center" />
+                <ComboBox SelectedValue="{Binding IndexPk}" Grid.Column="1" ItemsSource="{Binding IndexInfos}" DisplayMemberPath="Name" SelectedValuePath="Value" Width="200" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="RefreshButton" Margin="10 2 0 2" Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_RefreshIndex}" Command="{Binding RefreshIndexCommand}" Width="Auto" MinWidth="70" Style="{StaticResource SecondaryButton}"/>
+                    <Button x:Name="SettingsButton" Margin="10 2 0 2" Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_Settings}" Command="{Binding OpenSettingsCommand}" Style="{StaticResource SecondaryButton}" Width="Auto" MinWidth="70" />
+                </StackPanel>
+                <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_ResultInfo}" Style="{StaticResource CommonLabel}" VerticalAlignment="Center" Grid.Column="3" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MaxHeight="100" Grid.Column="4">
+                    <Label Content="{Binding ResultInfo}" Style="{StaticResource ResultInfoLabelStyle}" />
+                </ScrollViewer>
+            </Grid>
+            <DockPanel DockPanel.Dock="Top">
+                <Label Content="{Binding Converter={StaticResource LocalizeConverter}, ConverterParameter=Search_HintWords}" Style="{StaticResource CommonLabel}" DockPanel.Dock="Left" />
+                <ScrollViewer DockPanel.Dock="Right" VerticalScrollBarVisibility="Auto" MaxHeight="60">
+                    <ItemsControl ItemsSource="{Binding HintWords}" ItemsPanel="{StaticResource ItemsPanelTemplateHorizontal}" HorizontalAlignment="Left">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Label Style="{StaticResource HintWordLabelStyle}" Content="{Binding Word}"  />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </DockPanel>
+            <DataGrid Name="MatchedCodeSourceGrid" Style="{StaticResource MatchedCodeSourceGridStyle}" Margin="0 6 0 0" ItemsSource="{Binding SearchResults}" IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="3*" Binding="{Binding CodeSource.FileName}" Header="{x:Static res:Strings.Search_ColumnName}" />
+                    <DataGridTextColumn Width="1*" Binding="{Binding CodeSource.FileExtension}" Header="{x:Static res:Strings.Search_ColumnExtension}" />
+                    <DataGridTextColumn Width="1*" Binding="{Binding MatchedLine}" Header="{x:Static stringTools:Strings.Search_ColumnMatchedLine}" />
+                    <DataGridTemplateColumn Width="6*" Header="{x:Static stringTools:Strings.Search_ColumnContent}">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <ContentControl Content="{Binding MatchedContent, Converter={StaticResource StringToXamlConverter}, Mode=OneWay}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Width="6*" Binding="{Binding CodeSource.FilePath}" Header="{x:Static res:Strings.Search_ColumnPath}" />
+                </DataGrid.Columns>
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource BaseGridStyle}">
+                        <EventSetter Event="MouseDoubleClick" Handler="Row_DoubleClick" />
+                    </Style>
+                </DataGrid.Resources>
+            </DataGrid>
+        </DockPanel>
+    </Grid>
+</UserControl>
