@@ -9,6 +9,8 @@ namespace qgrepControls.Classes
     public interface IWrapperApp
     {
         string GetConfigPath(bool useGlobalPath);
+        /// <summary>当前解决方案所在目录；没有打开的解决方案时返回空串。</summary>
+        string GetSolutionPath();
         void GatherAllFoldersAndExtensionsFromSolution(MessageCallback extensionCallback, MessageCallback folderCallback);
         void OpenFile(string path, string line);
         string GetSelectedText();

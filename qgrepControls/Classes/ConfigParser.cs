@@ -58,11 +58,18 @@ namespace qgrepControls.Classes
     {
         public ConfigGroup Parent;
         public bool IsExclude = false;
+
+        /// <summary>
+        /// 「不包含的目录」：仍然是 exclude 指令，但 Rule 是 DirectoryRule 生成的目录正则。
+        /// 只影响界面上的类型显示与编辑回显，不改变 .cfg 格式。
+        /// </summary>
+        public bool IsDirectory = false;
+
         public string Rule = "";
 
         public ConfigRule DeepClone()
         {
-            return new ConfigRule() { Rule = Rule, IsExclude = IsExclude };
+            return new ConfigRule() { Rule = Rule, IsExclude = IsExclude, IsDirectory = IsDirectory };
         }
     }
     public class ConfigGroup
@@ -86,14 +93,14 @@ namespace qgrepControls.Classes
             return configPath;
         }
 
-        public ConfigRule AddNewRule(string regex, bool isExclude)
+        public ConfigRule AddNewRule(string regex, bool isExclude, bool isDirectory = false)
         {
-            if (Rules.Any(x => x.Rule == regex && x.IsExclude == isExclude))
+            if (Rules.Any(x => x.Rule == regex && x.IsExclude == isExclude && x.IsDirectory == isDirectory))
             {
                 return null;
             }
 
-            ConfigRule configRule = new ConfigRule() { Rule = regex, IsExclude = isExclude, Parent = this };
+            ConfigRule configRule = new ConfigRule() { Rule = regex, IsExclude = isExclude, IsDirectory = isDirectory, Parent = this };
             Rules.Add(configRule);
             return configRule;
         }
@@ -268,7 +275,8 @@ namespace qgrepControls.Classes
                     {
                         ConfigRule rule = new ConfigRule() { Parent = GetGroup(insideGroup) };
                         rule.IsExclude = true;
-                        rule.Rule = line.Substring(IncludePrefix.Length);
+                        rule.Rule = line.Substring(ExcludePrefix.Length);
+                        rule.IsDirectory = DirectoryRule.IsDirectoryRegex(rule.Rule);
                         GetGroup(insideGroup).Rules.Add(rule);
                     }
                     else if (line.StartsWith(GroupBegin))
@@ -370,9 +378,13 @@ namespace qgrepControls.Classes
             }
         }
 
+        /// <summary>解决方案（或独立版工作目录）的目录，用于相对路径计算与「打开目录」的初始位置。</summary>
         public string Path = "";
+
+        /// <summary>配置文件（*.cfg）与索引缓存（*.qgd/*.qgf/*.qgc/settings.json）的实际存放目录，由 ConfigStorage 决定。</summary>
+        public string ConfigDirectory = "";
+
         public string RelativePath = "";
-        public string PathSuffix = @"\.qgrep\";
 
         public ObservableCollection<ConfigProject> ConfigProjects = new ObservableCollection<ConfigProject>();
         public ObservableCollection<ConfigProject> OldConfigProjects = new ObservableCollection<ConfigProject>();
@@ -412,37 +424,53 @@ namespace qgrepControls.Classes
             return Encoding.UTF8.GetString(rawBytes);
         }
 
-        public static void Initialize(string ConfigPath)
+        /// <summary>
+        /// 初始化。配置与索引缓存写进 <paramref name="configDirectory"/>（不再写进项目目录），
+        /// <paramref name="solutionPath"/> 仅用于相对路径计算与「打开目录」的初始位置。
+        /// </summary>
+        public static void Initialize(string configDirectory, string solutionPath = "")
         {
-            if (Instance.Path != ConfigPath)
+            if (Instance.ConfigDirectory != configDirectory)
             {
                 UnloadConfig();
-                Instance.Path = ConfigPath;
+                Instance.ConfigDirectory = configDirectory;
+                Instance.Path = solutionPath ?? "";
                 LoadConfig();
                 SaveConfig();
 
                 if (Instance.LastConfigPath.Length != 0)
-                    Instance.LastConfigPath = ConfigPath;
+                    Instance.LastConfigPath = Instance.Path;
 
+                SaveSettings();
+            }
+            else if (Instance.Path != (solutionPath ?? ""))
+            {
+                // 配置目录没变但解决方案变了（例如切换 sln、开关「使用全局配置」后再切回）
+                Instance.Path = solutionPath ?? "";
                 SaveSettings();
             }
         }
 
         public static bool IsInitialized()
         {
-            return Instance.Path.Length > 0;
+            return Instance.ConfigDirectory.Length > 0;
         }
 
         public static void LoadConfig()
         {
             Instance.ConfigProjects = new ObservableCollection<ConfigProject>();
 
-            if (!Directory.Exists(Instance.Path + Instance.PathSuffix))
+            if (Instance.ConfigDirectory.Length == 0)
             {
-                Directory.CreateDirectory(Instance.Path + Instance.PathSuffix);
+                return;
             }
 
-            string[] configs = Directory.GetFiles(Instance.Path + Instance.PathSuffix, "*.cfg");
+            if (!Directory.Exists(Instance.ConfigDirectory))
+            {
+                Directory.CreateDirectory(Instance.ConfigDirectory);
+            }
+
+            string[] configs = Directory.GetFiles(Instance.ConfigDirectory, "*.cfg");
             if (configs.Length == 0)
             {
                 AddNewProject();
@@ -527,6 +555,7 @@ namespace qgrepControls.Classes
         public static void UnloadConfig()
         {
             Instance.Path = "";
+            Instance.ConfigDirectory = "";
             Instance.ConfigProjects.Clear();
 
             RemoveWatchers();
@@ -557,7 +586,7 @@ namespace qgrepControls.Classes
 
             do
             {
-                newPath = Instance.Path + Instance.PathSuffix + string.Format(Properties.Resources.ConfigFormat, index) + ".cfg";
+                newPath = System.IO.Path.Combine(Instance.ConfigDirectory, string.Format(Properties.Resources.ConfigFormat, index) + ".cfg");
                 index++;
             }
             while (File.Exists(newPath));
@@ -842,7 +871,8 @@ namespace qgrepControls.Classes
                     for (int k = 0; k < Instance.ConfigProjects[i].Groups[j].Rules.Count; k++)
                     {
                         if (!Instance.ConfigProjects[i].Groups[j].Rules[k].Rule.Equals(Instance.OldConfigProjects[i].Groups[j].Rules[k].Rule) ||
-                            Instance.ConfigProjects[i].Groups[j].Rules[k].IsExclude != Instance.OldConfigProjects[i].Groups[j].Rules[k].IsExclude)
+                            Instance.ConfigProjects[i].Groups[j].Rules[k].IsExclude != Instance.OldConfigProjects[i].Groups[j].Rules[k].IsExclude ||
+                            Instance.ConfigProjects[i].Groups[j].Rules[k].IsDirectory != Instance.OldConfigProjects[i].Groups[j].Rules[k].IsDirectory)
                         {
                             return true;
                         }
@@ -855,6 +885,11 @@ namespace qgrepControls.Classes
 
         private static bool IsFileRelevant(string fullPath)
         {
+            // 引擎内部统一使用 '/' 作为路径分隔符（fileutil.cpp 的 normalizePath/joinPaths），
+            // 而这里拿到的是 Windows 原生路径，先归一化再匹配，才能让依赖分隔符的
+            // 「目录」规则与索引阶段保持一致。
+            string normalizedPath = fullPath.Replace('\\', '/');
+
             foreach (ConfigProject configProject in Instance.ConfigProjects)
             {
                 foreach (ConfigGroup configGroup in configProject.Groups)
@@ -871,13 +906,30 @@ namespace qgrepControls.Classes
 
                     if (matchesPath)
                     {
+                        bool hasIncludeRules = false;
                         bool matchesIncludes = false;
                         bool matchesExcludes = false;
 
                         foreach (ConfigRule configRule in configGroup.Rules)
                         {
-                            var match = Regex.Match(fullPath, configRule.Rule);
-                            if (match.Success)
+                            if (!configRule.IsExclude)
+                            {
+                                hasIncludeRules = true;
+                            }
+
+                            bool match = false;
+
+                            try
+                            {
+                                // 引擎侧统一使用 RO_IGNORECASE，这里保持一致
+                                match = Regex.IsMatch(normalizedPath, configRule.Rule, RegexOptions.IgnoreCase);
+                            }
+                            catch (ArgumentException)
+                            {
+                                // 非法正则（用户手写 .cfg 时可能出现）：忽略该条规则，不影响监听线程
+                            }
+
+                            if (match)
                             {
                                 if (!configRule.IsExclude)
                                 {
@@ -888,6 +940,13 @@ namespace qgrepControls.Classes
                                     matchesExcludes = true;
                                 }
                             }
+                        }
+
+                        // 引擎侧（project.cpp isFileAcceptable）在没有 include 规则时视为全部命中，
+                        // 这里必须一致，否则「只配置了排除规则」的项目不会触发自动索引更新。
+                        if (!hasIncludeRules)
+                        {
+                            matchesIncludes = true;
                         }
 
                         if (matchesIncludes && !matchesExcludes)
@@ -1041,7 +1100,7 @@ namespace qgrepControls.Classes
 
         public static void SaveSettings()
         {
-            string filePath = System.IO.Path.Combine(Instance.Path, ".qgrep", "settings.json");
+            string filePath = System.IO.Path.Combine(Instance.ConfigDirectory, "settings.json");
             try
             {
                 ConfigSettings ConfigSettings = new ConfigSettings()
@@ -1059,7 +1118,7 @@ namespace qgrepControls.Classes
 
         public static void LoadSettings()
         {
-            string filePath = System.IO.Path.Combine(Instance.Path, ".qgrep", "settings.json");
+            string filePath = System.IO.Path.Combine(Instance.ConfigDirectory, "settings.json");
             try
             {
                 string json = File.ReadAllText(filePath);

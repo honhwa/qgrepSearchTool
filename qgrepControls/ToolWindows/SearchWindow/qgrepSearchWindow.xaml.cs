@@ -440,9 +440,7 @@ namespace qgrepControls.SearchWindow
             string configPath = WrapperApp.GetConfigPath(Settings.Default.UseGlobalPath);
             if (configPath.Length > 0)
             {
-                string solutionPath = WrapperApp.GetConfigPath(false);
-
-                ConfigParser.Initialize(configPath);
+                ConfigParser.Initialize(configPath, WrapperApp.GetSolutionPath());
 
                 ConfigParser.Instance.FilesChanged += FilesChanged;
                 ConfigParser.Instance.FilesAddedOrRemoved += FilesAddedOrRemoved; ;

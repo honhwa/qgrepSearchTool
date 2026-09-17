@@ -9,6 +9,7 @@ using System.Data;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace qgrepControls.SearchWindow
 {
@@ -78,6 +79,7 @@ namespace qgrepControls.SearchWindow
 
             UseGlobalPath.IsChecked = Settings.Default.UseGlobalPath;
             UseRelativePaths.IsChecked = ConfigParser.Instance.LastConfigPath.Length != 0;
+            ConfigRootPathBox.Text = Settings.Default.ConfigRootPath ?? "";
         }
 
         private void AddNewRule_Click(object sender, RoutedEventArgs e)
@@ -93,7 +95,7 @@ namespace qgrepControls.SearchWindow
                 SearchGroup selectedGroup = GroupsListBox.InnerListBox.SelectedItem as SearchGroup;
                 if (selectedGroup != null)
                 {
-                    ConfigRule configRule = selectedGroup.ConfigGroup.AddNewRule(ruleWindow.RegExTextBox.Text, ruleWindow.RuleType.SelectedIndex == 1);
+                    ConfigRule configRule = selectedGroup.ConfigGroup.AddNewRule(ruleWindow.RegExTextBox.Text, ruleWindow.RuleType.SelectedIndex != RuleWindow.TypeInclude, ruleWindow.IsDirectoryRule);
                     if (configRule != null)
                     {
                         selectedGroup.Rules.Add(new SearchRule(configRule));
@@ -109,8 +111,12 @@ namespace qgrepControls.SearchWindow
             SearchRule searchRule = RulesListBox.InnerListBox.SelectedItem as SearchRule;
 
             RuleWindow ruleWindow = new RuleWindow(SearchWindow.WrapperApp);
-            ruleWindow.RuleType.SelectedIndex = searchRule.IsExclude ? 1 : 0;
-            ruleWindow.RegExTextBox.Text = searchRule.RegEx;
+            ruleWindow.RuleType.SelectedIndex = searchRule.IsDirectory
+                ? RuleWindow.TypeExcludeDirectory
+                : (searchRule.IsExclude ? RuleWindow.TypeExclude : RuleWindow.TypeInclude);
+            ruleWindow.RegExTextBox.Text = searchRule.IsDirectory
+                ? DirectoryRule.ExtractInput(searchRule.RegEx)
+                : searchRule.RegEx;
             ruleWindow.RegExTextBox.SelectAll();
             ruleWindow.RegExTextBox.Focus();
 
@@ -121,7 +127,8 @@ namespace qgrepControls.SearchWindow
             if (ruleWindow.IsOK)
             {
                 searchRule.RegEx = ruleWindow.RegExTextBox.Text;
-                searchRule.IsExclude = ruleWindow.RuleType.SelectedIndex == 1;
+                searchRule.IsExclude = ruleWindow.RuleType.SelectedIndex != RuleWindow.TypeInclude;
+                searchRule.IsDirectory = ruleWindow.IsDirectoryRule;
                 searchRule.UpdateConfig();
             }
 
@@ -131,7 +138,9 @@ namespace qgrepControls.SearchWindow
         private void AddNewPath_Click(object sender, RoutedEventArgs e)
         {
             FolderSelectDialog folderSelectDialog = new FolderSelectDialog();
-            folderSelectDialog.InitialDirectory = ConfigParser.Instance.Path;
+            folderSelectDialog.InitialDirectory = ConfigParser.Instance.Path.Length > 0
+                ? ConfigParser.Instance.Path
+                : ConfigParser.Instance.ConfigDirectory;
             folderSelectDialog.Multiselect = true;
             folderSelectDialog.Title = Properties.Resources.SelectFolderPrompt;
             if (folderSelectDialog.ShowDialog())
@@ -333,7 +342,7 @@ namespace qgrepControls.SearchWindow
         {
             System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo()
             {
-                FileName = ConfigParser.Instance.Path + ConfigParser.Instance.PathSuffix,
+                FileName = ConfigParser.Instance.ConfigDirectory,
                 UseShellExecute = true,
                 Verb = "open"
             });
@@ -454,7 +463,65 @@ namespace qgrepControls.SearchWindow
             Settings.Default.UseGlobalPath = UseGlobalPath.IsChecked ?? false;
             Settings.Default.Save();
 
-            ConfigParser.Initialize(SearchWindow.WrapperApp.GetConfigPath(Settings.Default.UseGlobalPath));
+            ConfigParser.Initialize(SearchWindow.WrapperApp.GetConfigPath(Settings.Default.UseGlobalPath), SearchWindow.WrapperApp.GetSolutionPath());
+            LoadFromConfig();
+
+            UseRelativePaths.IsChecked = ConfigParser.Instance.LastConfigPath.Length != 0;
+        }
+
+        //
+        // 配置存放目录（可自定义）
+        //
+
+        private void ConfigRootPathBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            ApplyConfigRootPath();
+        }
+
+        private void ConfigRootPathBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter)
+            {
+                ApplyConfigRootPath();
+                e.Handled = true;
+            }
+        }
+
+        private void ConfigRootBrowse_Click(object sender, RoutedEventArgs e)
+        {
+            FolderSelectDialog folderSelectDialog = new FolderSelectDialog();
+            folderSelectDialog.InitialDirectory = ConfigStorage.GetRootDirectory();
+            folderSelectDialog.Title = Properties.Resources.ConfigRootPathLabel;
+            folderSelectDialog.Multiselect = false;
+
+            if (folderSelectDialog.ShowDialog() && folderSelectDialog.FileNames.Length > 0)
+            {
+                ConfigRootPathBox.Text = folderSelectDialog.FileNames[0];
+                ApplyConfigRootPath();
+            }
+        }
+
+        private void ConfigRootReset_Click(object sender, RoutedEventArgs e)
+        {
+            ConfigRootPathBox.Text = "";
+            ApplyConfigRootPath();
+        }
+
+        /// <summary>保存自定义的配置根目录，并立刻按新目录重新加载配置。</summary>
+        private void ApplyConfigRootPath()
+        {
+            string newRoot = (ConfigRootPathBox.Text ?? "").Trim();
+            string currentRoot = Settings.Default.ConfigRootPath ?? "";
+
+            if (string.Equals(newRoot, currentRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            Settings.Default.ConfigRootPath = newRoot;
+            Settings.Default.Save();
+
+            ConfigParser.Initialize(SearchWindow.WrapperApp.GetConfigPath(Settings.Default.UseGlobalPath), SearchWindow.WrapperApp.GetSolutionPath());
             LoadFromConfig();
 
             UseRelativePaths.IsChecked = ConfigParser.Instance.LastConfigPath.Length != 0;
@@ -463,10 +530,10 @@ namespace qgrepControls.SearchWindow
         private void UseRelativePaths_Click(object sender, RoutedEventArgs e)
         {
             ConfigParser.SaveConfig();
-            ConfigParser.Instance.LastConfigPath = (UseRelativePaths.IsChecked ?? false) ? SearchWindow.WrapperApp.GetConfigPath(false) : "";
+            ConfigParser.Instance.LastConfigPath = (UseRelativePaths.IsChecked ?? false) ? SearchWindow.WrapperApp.GetSolutionPath() : "";
             ConfigParser.SaveSettings();
 
-            ConfigParser.Initialize(SearchWindow.WrapperApp.GetConfigPath(Settings.Default.UseGlobalPath));
+            ConfigParser.Initialize(SearchWindow.WrapperApp.GetConfigPath(Settings.Default.UseGlobalPath), SearchWindow.WrapperApp.GetSolutionPath());
             LoadFromConfig();
         }
     }

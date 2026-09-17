@@ -454,5 +454,17 @@ namespace qgrepControls.Properties {
                 this["UseRelativePaths"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string ConfigRootPath {
+            get {
+                return ((string)(this["ConfigRootPath"]));
+            }
+            set {
+                this["ConfigRootPath"] = value;
+            }
+        }
     }
 }

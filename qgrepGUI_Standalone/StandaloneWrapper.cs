@@ -60,17 +60,27 @@ namespace qgrepGUI
             return "";
         }
 
+        /// <summary>
+        /// 配置 / 索引缓存目录：&lt;Root&gt;\_standalone（Root 由设置项 ConfigRootPath 决定）。
+        /// 独立版没有解决方案概念，因此使用固定的独立目录。
+        /// </summary>
         public string GetConfigPath(bool useGlobalPath)
         {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string appFolderPath = Path.Combine(appDataPath, "qgrepSearch");
+            string configDirectory = ConfigStorage.EnsureDirectory(ConfigStorage.GetStandaloneConfigDirectory());
 
-            if (!Directory.Exists(appFolderPath))
+            // 首次升级：老版本独立版直接把配置放在 %APPDATA%\qgrepSearch 根下，搬进 _standalone
+            if (configDirectory.Length > 0)
             {
-                Directory.CreateDirectory(appFolderPath);
+                ConfigStorage.MigrateDirectoryContents(ConfigStorage.GetDefaultRootDirectory(), configDirectory);
             }
 
-            return appFolderPath;
+            return configDirectory;
+        }
+
+        /// <summary>独立版没有解决方案，返回空串。</summary>
+        public string GetSolutionPath()
+        {
+            return "";
         }
 
         public void OpenFile(string path, string line)

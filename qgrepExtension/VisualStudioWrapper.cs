@@ -144,26 +144,52 @@ namespace qgrepSearch
             return currentlySelectedText.Replace("\n", "").Replace("\r", "");
         }
 
+        /// <summary>
+        /// 配置 / 索引缓存目录。不再写进解决方案目录，统一放到 <see cref="ConfigStorage"/> 指定的根目录下：
+        /// 全局模式 → &lt;Root&gt;\_global；否则 → &lt;Root&gt;\&lt;解决方案完整路径（非法字符替换为 '_'）&gt;。
+        /// </summary>
         public string GetConfigPath(bool useGlobalPath)
         {
             try
             {
-                if (useGlobalPath)
-                {
-                    string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    string appFolderPath = Path.Combine(appDataPath, "qgrepSearch");
+                string solutionPath = GetSolutionPath();
 
-                    if (!Directory.Exists(appFolderPath))
-                    {
-                        Directory.CreateDirectory(appFolderPath);
-                    }
-
-                    return appFolderPath;
-                }
-                else
+                string configDirectory = ConfigStorage.GetConfigDirectory(useGlobalPath, solutionPath);
+                if (configDirectory.Length == 0)
                 {
-                    return System.IO.Path.GetDirectoryName(Data.DTE?.Solution?.FullName ?? "");
+                    return "";
                 }
+
+                if (ConfigStorage.EnsureDirectory(configDirectory).Length == 0)
+                {
+                    return "";
+                }
+
+                // 首次升级：把老版本放在解决方案目录下 .qgrep 里的配置/索引搬过来
+                if (!useGlobalPath)
+                {
+                    ConfigStorage.MigrateLegacyConfig(solutionPath, configDirectory);
+                }
+
+                return configDirectory;
+            }
+            catch { }
+
+            return "";
+        }
+
+        /// <summary>当前解决方案所在目录；未打开解决方案时返回空串。</summary>
+        public string GetSolutionPath()
+        {
+            try
+            {
+                string solutionFullName = Data?.DTE?.Solution?.FullName ?? "";
+                if (solutionFullName.Length == 0)
+                {
+                    return "";
+                }
+
+                return System.IO.Path.GetDirectoryName(solutionFullName) ?? "";
             }
             catch { }
 
@@ -859,7 +885,14 @@ namespace qgrepSearch
                         )
                     );
 
-                    string settingsPath = Path.Combine(GetConfigPath(false), ".qgrep", "qgrep-shortcuts.vssettings");
+                    // 没有解决方案时配置目录为空，退回临时目录，避免把文件写到当前工作目录
+                    string configDirectory = GetConfigPath(false);
+                    if (configDirectory.Length == 0)
+                    {
+                        configDirectory = Path.GetTempPath();
+                    }
+
+                    string settingsPath = Path.Combine(configDirectory, "qgrep-shortcuts.vssettings");
 
                     doc.Save(settingsPath);
                     Data?.DTE?.ExecuteCommand("Tools.ImportandExportSettings", $"/import:\"{settingsPath}\"");

@@ -19,6 +19,7 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="34" />
         </Grid.RowDefinitions>
         <Grid Grid.Column="0" Margin="-1,0,0,0" Style="{DynamicResource ZIndexFocusable}">
@@ -50,7 +51,15 @@
                 <usercontrols:ConfigListBox Grid.Column="1" x:Name="RulesListBox" />
             </Grid>
         </Grid>
-        <DockPanel Grid.Row="3" Grid.ColumnSpan="5" Margin="5,5,0,5">
+        <DockPanel Grid.Row="1" Grid.ColumnSpan="5" Margin="5,0,0,4">
+            <TextBlock x:Name="ConfigRootPathLabel" Text="{x:Static resx:Resources.ConfigRootPathLabel}" VerticalAlignment="Center" Margin="0,0,6,0" MinWidth="90"/>
+            <Button x:Name="ConfigRootBrowse" Content="{x:Static resx:Resources.ConfigRootBrowseContent}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="5,0,0,0" Click="ConfigRootBrowse_Click" Padding="5,2,8,2"/>
+            <Button x:Name="ConfigRootReset" Content="{x:Static resx:Resources.ConfigRootResetContent}" DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="5,0,0,0" Click="ConfigRootReset_Click" Padding="5,2,8,2"/>
+            <TextBox x:Name="ConfigRootPathBox" Height="23" VerticalContentAlignment="Center" Style="{DynamicResource SomeTextBoxStyle}"
+                     ToolTip="{x:Static resx:Resources.ConfigRootPathTooltip}"
+                     LostFocus="ConfigRootPathBox_LostFocus" KeyDown="ConfigRootPathBox_KeyDown"/>
+        </DockPanel>
+        <DockPanel Grid.Row="2" Grid.ColumnSpan="5" Margin="5,5,0,5">
             <Button x:Name="AdvancedToggle" Content="{x:Static resx:Resources.AdvancedToggleContent}" ToolTipService.ShowOnDisabled="True" HorizontalAlignment="Center" Margin="0,0,5,0" Click="AdvancedToggle_Click" Padding="5,2,8,2"/>
             <Button x:Name="ConfigOpen" Content="{x:Static resx:Resources.ConfigOpenContent}" HorizontalAlignment="Center" Margin="0,0,5,0" Click="ConfigOpen_Click" Padding="5,2,8,2"/>
             <Button x:Name="AutomaticPopulation" Content="{x:Static resx:Resources.AutomaticPopulationContent}" HorizontalAlignment="Center" Margin="0,0,5,0" Click="AutomaticPopulation_Click" Padding="5,2,8,2" ToolTip="Gather folders automatically from solution"/>

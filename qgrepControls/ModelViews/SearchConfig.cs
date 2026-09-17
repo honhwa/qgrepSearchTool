@@ -26,6 +26,7 @@ namespace qgrepControls.ModelViews
     public class SearchRule : SelectableData
     {
         private bool isExclude;
+        private bool isDirectory;
         private string regEx;
 
         public bool IsExclude
@@ -37,9 +38,29 @@ namespace qgrepControls.ModelViews
             set
             {
                 isExclude = value;
-                IsExcludeText = isExclude ? "Exclude" : "Include";
+                UpdateIsExcludeText();
                 OnPropertyChanged();
             }
+        }
+
+        /// <summary>「不包含的目录」：IsExclude 为 true，且规则由 DirectoryRule 生成。</summary>
+        public bool IsDirectory
+        {
+            get
+            {
+                return isDirectory;
+            }
+            set
+            {
+                isDirectory = value;
+                UpdateIsExcludeText();
+                OnPropertyChanged();
+            }
+        }
+
+        private void UpdateIsExcludeText()
+        {
+            IsExcludeText = isExclude ? (isDirectory ? "Exclude dir" : "Exclude") : "Include";
         }
 
         private string isExcludeText;
@@ -74,6 +95,7 @@ namespace qgrepControls.ModelViews
         public SearchRule(ConfigRule configRule)
         {
             ConfigRule = configRule;
+            IsDirectory = configRule.IsDirectory;
             IsExclude = configRule.IsExclude;
             RegEx = configRule.Rule;
         }
@@ -82,6 +104,7 @@ namespace qgrepControls.ModelViews
         {
             ConfigRule.Rule = RegEx;
             ConfigRule.IsExclude = IsExclude;
+            ConfigRule.IsDirectory = IsDirectory;
         }
     }
     public class SearchPath : SelectableData

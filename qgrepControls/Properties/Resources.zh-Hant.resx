@@ -252,6 +252,9 @@
   <data name="ExcludeFilesLabelContent" xml:space="preserve">
     <value>排除文件：</value>
   </data>
+  <data name="ExcludeDirOptionContent" xml:space="preserve">
+    <value>不包含的目錄</value>
+  </data>
   <data name="ExcludeOptionContent" xml:space="preserve">
     <value>排除</value>
   </data>
@@ -519,6 +522,24 @@
   <data name="PredefinedButtonTooltip" xml:space="preserve">
     <value>預定義正則表達式列表</value>
   </data>
+  <data name="PredefinedDirectoriesLabel" xml:space="preserve">
+    <value>排除目錄</value>
+  </data>
+  <data name="PredefinedExcludeBinDirContent" xml:space="preserve">
+    <value>排除 bin 目錄</value>
+  </data>
+  <data name="PredefinedExcludeDebugDirContent" xml:space="preserve">
+    <value>排除 debug 目錄</value>
+  </data>
+  <data name="PredefinedExcludeObjBinDirsContent" xml:space="preserve">
+    <value>同時排除 obj 及 bin 目錄</value>
+  </data>
+  <data name="PredefinedExcludeObjDirContent" xml:space="preserve">
+    <value>排除 obj 目錄</value>
+  </data>
+  <data name="PredefinedExcludeReleaseDirContent" xml:space="preserve">
+    <value>排除 release 目錄</value>
+  </data>
   <data name="ProjectsListBoxAddButtonTooltip" xml:space="preserve">
     <value>添加新配置</value>
   </data>
@@ -713,5 +734,17 @@
   </data>
   <data name="UseRelativePathsContent" xml:space="preserve">
     <value>使用相對路徑</value>
+  </data>
+  <data name="ConfigRootPathLabel" xml:space="preserve">
+    <value>配置存放目錄：</value>
+  </data>
+  <data name="ConfigRootPathTooltip" xml:space="preserve">
+    <value>qgrep 的配置（*.cfg）與索引快取（*.qgd/*.qgf/*.qgc）存放位置。每個解決方案會在該目錄下產生一個獨立子目錄，目錄名由解決方案路徑產生，其中的非法字元以 '_' 取代。留空則使用 %APPDATA%\qgrepSearch。</value>
+  </data>
+  <data name="ConfigRootBrowseContent" xml:space="preserve">
+    <value>瀏覽...</value>
+  </data>
+  <data name="ConfigRootResetContent" xml:space="preserve">
+    <value>恢復預設</value>
   </data>
 </root>

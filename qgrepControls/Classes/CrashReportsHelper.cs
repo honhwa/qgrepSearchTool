@@ -21,8 +21,13 @@ namespace qgrepControls.Classes
             {
                 try
                 {
-                    string roamingFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                    string filePath = System.IO.Path.Combine(roamingFolderPath, "LogErrors.txt");
+                    string folderPath = GetPrimaryCrashReportDirectory();
+                    if (folderPath.Length == 0)
+                    {
+                        return;
+                    }
+
+                    string filePath = System.IO.Path.Combine(folderPath, "LogErrors.txt");
                     using (StreamWriter writer = new StreamWriter(filePath, true))
                     {
                         writer.WriteLine(message);
@@ -32,6 +37,56 @@ namespace qgrepControls.Classes
             }
         }
 
+        /// <summary>
+        /// 崩溃报告存放目录（优先）与旧版本目录（用于兼容读取）。
+        /// 主目录创建失败时退回旧位置，保证崩溃报告一定写得下去。
+        /// </summary>
+        private static List<string> GetCrashReportDirectories()
+        {
+            List<string> directories = new List<string>();
+            string legacyDirectory = "";
+
+            try
+            {
+                legacyDirectory = System.IO.Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "qgrepSearch");
+            }
+            catch { }
+
+            try
+            {
+                string directory = ConfigStorage.EnsureDirectory(ConfigStorage.GetCrashesDirectory());
+                if (directory.Length > 0)
+                {
+                    directories.Add(directory);
+                }
+            }
+            catch { }
+
+            try
+            {
+                if (legacyDirectory.Length > 0 && !directories.Contains(legacyDirectory))
+                {
+                    // 主目录不可用时创建旧目录兜底；可用时仅在已存在的情况下纳入读取范围
+                    if (directories.Count == 0 || Directory.Exists(legacyDirectory))
+                    {
+                        Directory.CreateDirectory(legacyDirectory);
+                        directories.Add(legacyDirectory);
+                    }
+                }
+            }
+            catch { }
+
+            return directories;
+        }
+
+        /// <summary>取第一个可用的崩溃报告目录；没有则返回空串。</summary>
+        private static string GetPrimaryCrashReportDirectory()
+        {
+            List<string> directories = GetCrashReportDirectories();
+            return directories.Count > 0 ? directories[0] : "";
+        }
+
         public static void WriteCrashReport(Exception ex)
         {
             //System.Diagnostics.Debugger.Launch();
@@ -39,10 +94,10 @@ namespace qgrepControls.Classes
             string report = PrintExceptionDetails(ex);
             if(report.Length > 0 && report.Contains("qgrep"))
             {
-                string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "qgrepSearch");
-                if(!Directory.Exists(folderPath))
+                string folderPath = GetPrimaryCrashReportDirectory();
+                if(folderPath.Length == 0)
                 {
-                    Directory.CreateDirectory(folderPath);
+                    return;
                 }
 
                 string fileName = "CrashReport_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".txt";
@@ -76,20 +131,19 @@ namespace qgrepControls.Classes
 
             try
             {
-                string folderPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "qgrepSearch");
-                DirectoryInfo dirInfo = new DirectoryInfo(folderPath);
-                FileInfo[] files = dirInfo.GetFiles("CrashReport_*.txt");
-
-                foreach (FileInfo file in files)
+                foreach (string folderPath in GetCrashReportDirectories())
                 {
-                    LastReportPath = file.FullName;
-                    LastReport = File.ReadAllText(file.FullName);
-                }
+                    foreach (FileInfo file in new DirectoryInfo(folderPath).GetFiles("CrashReport_*.txt"))
+                    {
+                        LastReportPath = file.FullName;
+                        LastReport = File.ReadAllText(file.FullName);
+                    }
 
-                string errorsLogPath = Path.Combine(folderPath, "LogErrors.txt");
-                if(File.Exists(errorsLogPath))
-                {
-                    File.Delete(errorsLogPath);
+                    string errorsLogPath = Path.Combine(folderPath, "LogErrors.txt");
+                    if (File.Exists(errorsLogPath))
+                    {
+                        File.Delete(errorsLogPath);
+                    }
                 }
             }
             catch { }

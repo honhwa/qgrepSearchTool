@@ -485,6 +485,69 @@ namespace qgrepControls.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Exclude directory.
+        /// </summary>
+        public static string ExcludeDirOptionContent {
+            get {
+                return ResourceManager.GetString("ExcludeDirOptionContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude directories.
+        /// </summary>
+        public static string PredefinedDirectoriesLabel {
+            get {
+                return ResourceManager.GetString("PredefinedDirectoriesLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude bin directory.
+        /// </summary>
+        public static string PredefinedExcludeBinDirContent {
+            get {
+                return ResourceManager.GetString("PredefinedExcludeBinDirContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude debug directory.
+        /// </summary>
+        public static string PredefinedExcludeDebugDirContent {
+            get {
+                return ResourceManager.GetString("PredefinedExcludeDebugDirContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude obj and bin directories.
+        /// </summary>
+        public static string PredefinedExcludeObjBinDirsContent {
+            get {
+                return ResourceManager.GetString("PredefinedExcludeObjBinDirsContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude obj directory.
+        /// </summary>
+        public static string PredefinedExcludeObjDirContent {
+            get {
+                return ResourceManager.GetString("PredefinedExcludeObjDirContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Exclude release directory.
+        /// </summary>
+        public static string PredefinedExcludeReleaseDirContent {
+            get {
+                return ResourceManager.GetString("PredefinedExcludeReleaseDirContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0}({1}).
         /// </summary>
         public static string FileAndLine {
@@ -1858,6 +1921,30 @@ namespace qgrepControls.Properties {
         public static string UseRelativePathsContent {
             get {
                 return ResourceManager.GetString("UseRelativePathsContent", resourceCulture);
+            }
+        }
+        
+        public static string ConfigRootPathLabel {
+            get {
+                return ResourceManager.GetString("ConfigRootPathLabel", resourceCulture);
+            }
+        }
+        
+        public static string ConfigRootPathTooltip {
+            get {
+                return ResourceManager.GetString("ConfigRootPathTooltip", resourceCulture);
+            }
+        }
+        
+        public static string ConfigRootBrowseContent {
+            get {
+                return ResourceManager.GetString("ConfigRootBrowseContent", resourceCulture);
+            }
+        }
+        
+        public static string ConfigRootResetContent {
+            get {
+                return ResourceManager.GetString("ConfigRootResetContent", resourceCulture);
             }
         }
     }

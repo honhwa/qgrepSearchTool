@@ -256,6 +256,9 @@
   <data name="ExcludeFilesLabelContent" xml:space="preserve">
     <value>Exclude files:</value>
   </data>
+  <data name="ExcludeDirOptionContent" xml:space="preserve">
+    <value>Exclude directory</value>
+  </data>
   <data name="ExcludeOptionContent" xml:space="preserve">
     <value>Exclude</value>
   </data>
@@ -523,6 +526,24 @@
   <data name="PredefinedButtonTooltip" xml:space="preserve">
     <value>A list of predefined regular expressions</value>
   </data>
+  <data name="PredefinedDirectoriesLabel" xml:space="preserve">
+    <value>Exclude directories</value>
+  </data>
+  <data name="PredefinedExcludeBinDirContent" xml:space="preserve">
+    <value>Exclude bin directory</value>
+  </data>
+  <data name="PredefinedExcludeDebugDirContent" xml:space="preserve">
+    <value>Exclude debug directory</value>
+  </data>
+  <data name="PredefinedExcludeObjBinDirsContent" xml:space="preserve">
+    <value>Exclude obj and bin directories</value>
+  </data>
+  <data name="PredefinedExcludeObjDirContent" xml:space="preserve">
+    <value>Exclude obj directory</value>
+  </data>
+  <data name="PredefinedExcludeReleaseDirContent" xml:space="preserve">
+    <value>Exclude release directory</value>
+  </data>
   <data name="ProjectsListBoxAddButtonTooltip" xml:space="preserve">
     <value>Add new config</value>
   </data>
@@ -717,5 +738,17 @@
   </data>
   <data name="UseRelativePathsContent" xml:space="preserve">
     <value>Use relative paths</value>
+  </data>
+  <data name="ConfigRootPathLabel" xml:space="preserve">
+    <value>Config folder:</value>
+  </data>
+  <data name="ConfigRootPathTooltip" xml:space="preserve">
+    <value>Where qgrep stores its configuration (*.cfg) and index cache (*.qgd/*.qgf/*.qgc). One subfolder is created per solution, named after the solution path with invalid characters replaced by '_'. Leave empty to use %APPDATA%\qgrepSearch.</value>
+  </data>
+  <data name="ConfigRootBrowseContent" xml:space="preserve">
+    <value>Browse...</value>
+  </data>
+  <data name="ConfigRootResetContent" xml:space="preserve">
+    <value>Default</value>
   </data>
 </root>
