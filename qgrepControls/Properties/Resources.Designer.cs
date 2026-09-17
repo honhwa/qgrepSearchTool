@@ -611,6 +611,60 @@ namespace qgrepControls.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Case sensitive.
+        /// </summary>
+        public static string CaseSensitiveLabel {
+            get {
+                return ResourceManager.GetString("CaseSensitiveLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Whole word.
+        /// </summary>
+        public static string WholeWordLabel {
+            get {
+                return ResourceManager.GetString("WholeWordLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to RegEx.
+        /// </summary>
+        public static string RegExLabel {
+            get {
+                return ResourceManager.GetString("RegExLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Search.
+        /// </summary>
+        public static string SearchButtonContent {
+            get {
+                return ResourceManager.GetString("SearchButtonContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to History.
+        /// </summary>
+        public static string HistoryButtonContent {
+            get {
+                return ResourceManager.GetString("HistoryButtonContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Configuration:.
+        /// </summary>
+        public static string ConfigLabel {
+            get {
+                return ResourceManager.GetString("ConfigLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Filter results ({0}).
         /// </summary>
         public static string FilterResultsLabel {

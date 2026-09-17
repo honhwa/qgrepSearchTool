@@ -301,6 +301,24 @@
   <data name="CustomFlagExcludeDesignerTooltip" xml:space="preserve">
     <value>Don't show results found in .designer.cs / .designer.vb files.</value>
   </data>
+  <data name="CaseSensitiveLabel" xml:space="preserve">
+    <value>Case sensitive</value>
+  </data>
+  <data name="WholeWordLabel" xml:space="preserve">
+    <value>Whole word</value>
+  </data>
+  <data name="RegExLabel" xml:space="preserve">
+    <value>RegEx</value>
+  </data>
+  <data name="SearchButtonContent" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="HistoryButtonContent" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="ConfigLabel" xml:space="preserve">
+    <value>Configuration:</value>
+  </data>
   <data name="FilterResultsLabel" xml:space="preserve">
     <value>Filter results ({0})</value>
   </data>
